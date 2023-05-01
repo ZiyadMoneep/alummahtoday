@@ -6,16 +6,24 @@ from django.db import models
 # Create your models here.
 from django.urls import reverse
 
+def get_sentinel_user():
+    return get_user_model().objects.get_or_create(username="deleted")[0]
+
+class Category(models.Model):
+    name = models.CharField(max_length=128)
+
+    def __str__(self):
+        return self.name
 
 class Article(models.Model):
-
+    category = models.ForeignKey(Category, on_delete=models.SET_NULL, null=True)
     title = models.CharField(max_length=250)
     img = models.ImageField(blank=True)
     body = models.TextField()
     date = models.DateTimeField(auto_now_add=True)
     author = models.ForeignKey(
         get_user_model(),
-        on_delete=models.CASCADE,
+                on_delete=models.SET(get_sentinel_user),
     )
 
     def __str__(self):
