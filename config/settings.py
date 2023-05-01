@@ -12,6 +12,7 @@ https://docs.djangoproject.com/en/4.2/ref/settings/
 import os
 from pathlib import Path
 from environs import Env  # new
+import socket
 
 env = Env()  # new
 env.read_env()  # new
@@ -29,8 +30,7 @@ SECRET_KEY = env.str("SECRET_KEY")
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = env.bool("DEBUG", default=False)
 
-ALLOWED_HOSTS = []
-
+ALLOWED_HOSTS = ["*"]  # new
 
 # Application definition
 
@@ -46,12 +46,19 @@ INSTALLED_APPS = [
     # 3rd Party
     "crispy_forms",  # new
     "crispy_bootstrap5",  # new
+    'allauth',
+    'allauth.account',
+    'rest_framework',
+    'debug_toolbar',
+    "django_browser_reload",
+    'django_extensions',
 
     # Own
     'articles',
 ]
 
 MIDDLEWARE = [
+    'django.middleware.cache.UpdateCacheMiddleware',  # new
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'whitenoise.middleware.WhiteNoiseMiddleware',  # new
@@ -60,6 +67,9 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'debug_toolbar.middleware.DebugToolbarMiddleware',  # new
+    "django_browser_reload.middleware.BrowserReloadMiddleware",  # new
+    'django.middleware.cache.FetchFromCacheMiddleware',  # new
 ]
 
 ROOT_URLCONF = 'config.urls'
@@ -125,30 +135,56 @@ USE_I18N = True
 USE_TZ = True
 
 # Static files (CSS, JavaScript, Images)
-# https://docs.djangoproject.com/en/3.2/howto/static-files/
+# https://docs.djangoproject.com/en/4.0/howto/static-files/
 
 CRISPY_ALLOWED_TEMPLATE_PACKS = "bootstrap5"  # new
 CRISPY_TEMPLATE_PACK = "bootstrap5"  # new
 
 STATIC_URL = '/static/'
-
 STATICFILES_DIRS = [str(BASE_DIR.joinpath("static"))]  # new
 STATIC_ROOT = str(BASE_DIR.joinpath("staticfiles"))  # new
-STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"  # new
+STATICFILES_FINDERS = [
+    'django.contrib.staticfiles.finders.FileSystemFinder',
+    'django.contrib.staticfiles.finders.AppDirectoriesFinder',
+]
+STATICFILES_STORAGE = 'whitenoise.storage.CompressedStaticFilesStorage'
+# STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"  # new
+# WHITENOISE_USE_FINDERS = True
+# WHITENOISE_MANIFEST_STRICT = False
+# WHITENOISE_ALLOW_ALL_ORIGINS = True
 
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 MEDIA_URL = '/media/'
 
 # Default primary key field type
-# https://docs.djangoproject.com/en/3.2/ref/settings/#default-auto-field
+# https://docs.djangoproject.com/en/4.0/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
-# LOGIN_REDIRECT_URL = "home"
+# AUTH_USER_MODEL = 'accounts.Author'
+# LOGIN_REDIRECT_URL = "pages:home"
 # LOGIN_URL = 'login'
-# LOGOUT_REDIRECT_URL = 'login'
+# LOGOUT_REDIRECT_URL = 'pages:home'
+
+# django-allauth config
+# SITE_ID = 1
+#
+# AUTHENTICATION_BACKENDS = [
+#     # Needed to login by username in Django admin, regardless of `allauth`
+#     'django.contrib.auth.backends.ModelBackend',
+#
+#     # `allauth` specific authentication methods, such as login by e-mail
+#     'allauth.account.auth_backends.AuthenticationBackend',
+# ]
 
 EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+
+# ACCOUNT_SESSION_REMEMBER = True  # new
+# ACCOUNT_SIGNUP_PASSWORD_ENTER_TWICE = True  # new
+# ACCOUNT_USERNAME_REQUIRED = False  # new
+# ACCOUNT_AUTHENTICATION_METHOD = 'email'  # new
+# ACCOUNT_EMAIL_REQUIRED = True  # new
+# ACCOUNT_UNIQUE_EMAIL = True  # new
 
 # EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
 # EMAIL_HOST = 'smtp.gmail.com'
@@ -158,9 +194,32 @@ EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
 # EMAIL_HOST_PASSWORD = os.environ.get('EMAIL_PASS')
 
 # EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"  # new
-# DEFAULT_FROM_EMAIL = "your_custom_email_account"
+DEFAULT_FROM_EMAIL = "info@alummahtoday.com"
 # EMAIL_HOST = "smtp.sendgrid.net"
 # EMAIL_HOST_USER = "apikey"
 # EMAIL_HOST_PASSWORD = "sendgrid_password"
 # EMAIL_PORT = 587
 # EMAIL_USE_TLS = True
+
+
+if DEBUG:
+    hostname, _, ips = socket.gethostbyname_ex(socket.gethostname())
+    INTERNAL_IPS = [ip[:-1] + '1' for ip in ips] + ['127.0.0.1', '10.0.2.2']
+
+CACHE_MIDDLEWARE_ALIAS = 'default'
+CACHE_MIDDLEWARE_SECONDS = 604800
+CACHE_MIDDLEWARE_KEY_PREFIX = ''
+
+# SECURE_SSL_REDIRECT = env.bool("DJANGO_SECURE_SSL_REDIRECT", default=False)
+# SECURE_HSTS_SECONDS = env.int("DJANGO_SECURE_HSTS_SECONDS", default=2592000)
+# SECURE_HSTS_INCLUDE_SUBDOMAINS = env.bool("DJANGO_SECURE_HSTS_INCLUDE_SUBDOMAINS", default=False)
+# SECURE_HSTS_PRELOAD = env.bool("DJANGO_SECURE_HSTS_PRELOAD", default=False)
+# SESSION_COOKIE_SECURE = env.bool("DJANGO_SESSION_COOKIE_SECURE", default=False)
+# CSRF_COOKIE_SECURE = env.bool("DJANGO_CSRF_COOKIE_SECURE", default=False)
+
+# - "DJANGO_SECURE_SSL_REDIRECT=False"
+# - "DJANGO_SECURE_HSTS_SECONDS=2592000"
+# - "DJANGO_SECURE_HSTS_INCLUDE_SUBDOMAINS=False"
+# - "DJANGO_SECURE_HSTS_PRELOAD=False"
+# - "DJANGO_SESSION_COOKIE_SECURE=False"
+# - "DJANGO_CSRF_COOKIE_SECURE=False"
