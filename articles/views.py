@@ -1,5 +1,5 @@
 from django.views import View
-from django.views.generic import ListView, DetailView, FormView  # new
+from django.views.generic import ListView, DetailView, FormView, TemplateView  # new
 from django.views.generic.detail import SingleObjectMixin  # new
 from django.views.generic.edit import UpdateView, DeleteView, CreateView
 from django.urls import reverse_lazy, reverse  # new
@@ -8,10 +8,11 @@ from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 from .forms import CommentForm
 from .models import Article
 
-
 # Create your views here.
 
-
+class TestView(TemplateView):
+    template_name = "_base.html"
+    
 class ArticleListView(ListView):
     model = Article
     template_name = 'article/article_list.html'
